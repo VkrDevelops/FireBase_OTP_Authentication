@@ -11,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import java.util.Objects
 import java.util.concurrent.TimeUnit
 
 class MainActivity2 : AppCompatActivity() {
@@ -28,7 +29,7 @@ class MainActivity2 : AppCompatActivity() {
 
         firebaseAuth=FirebaseAuth.getInstance()
         myOTPSent()
-// Force reCAPTCHA flow
+        //reCaptcha.........
         FirebaseAuth.getInstance().firebaseAuthSettings.forceRecaptchaFlowForTesting(true)
 
         binding.verify.setOnClickListener {
@@ -50,9 +51,10 @@ class MainActivity2 : AppCompatActivity() {
 
     }
 
+
     private fun myOTPSent() {
 
-        callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+       /* callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
             override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
                 verificationuser=verificationId.trim()
@@ -67,13 +69,28 @@ class MainActivity2 : AppCompatActivity() {
                 Toast.makeText(this@MainActivity2,e.message,Toast.LENGTH_LONG).show()
                 Log.d("usama","${e.message}")
             }
-        }
+        }*/
+
         val phone=intent.getStringExtra("phonenumber").toString().trim()
         val options = PhoneAuthOptions.newBuilder(firebaseAuth)
             .setPhoneNumber("+92$phone")                      // Phone number to verify
             .setTimeout(60L, TimeUnit.SECONDS)        // Timeout and unit
             .setActivity(this@MainActivity2)                 // Activity (for callback binding)
-            .setCallbacks(callbacks)                        // OnVerificationStateChangedCallbacks
+            .setCallbacks(object :PhoneAuthProvider.OnVerificationStateChangedCallbacks(){
+                override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                    verificationuser=verificationId.trim()
+                }
+
+                override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                    signInWithPhoneAuthCredential(credential)
+                }
+
+                override fun onVerificationFailed(e: FirebaseException) {
+                    Toast.makeText(this@MainActivity2,e.message,Toast.LENGTH_LONG).show()
+                    Log.d("usama","${e.message}")
+                }
+
+            })                        // OnVerificationStateChangedCallbacks
             .build()
         PhoneAuthProvider.verifyPhoneNumber(options)
     }
